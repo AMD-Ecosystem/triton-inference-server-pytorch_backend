@@ -85,6 +85,26 @@ def hipify(hipify_perl_path, src_file_path, dst_file_path):
     # PyTorch JIT codegen paths still use "cuda" in the source tree
     s = s.replace("torch/csrc/jit/codegen/rocm/", "torch/csrc/jit/codegen/cuda/")
 
+    # AOTI ships as aoti_include/cuda.h even on ROCm (that header pulls HIP
+    # via USE_ROCM). hipify-perl rewrites the include to hip/hip_runtime.h.
+    s = s.replace(
+        "torch/csrc/inductor/aoti_include/hip/hip_runtime.h",
+        "torch/csrc/inductor/aoti_include/cuda.h",
+    )
+
+    # Recent ROCm LibTorch puts allocator/stream APIs under c10::hip, not
+    # the c10::cuda masquerade that older hipify assumed.
+    s = s.replace(
+        "c10::cuda::CUDACachingAllocator", "c10::hip::HIPCachingAllocator"
+    )
+    s = s.replace("at::cuda::CUDAStream", "c10::hip::HIPStream")
+    s = s.replace(
+        "at::cuda::getStreamFromExternal", "c10::hip::getStreamFromExternal"
+    )
+    s = s.replace(
+        "at::cuda::setCurrentCUDAStream", "c10::hip::setCurrentHIPStream"
+    )
+
     with open(dst_file_path, "w") as f:
         f.write(s)
 

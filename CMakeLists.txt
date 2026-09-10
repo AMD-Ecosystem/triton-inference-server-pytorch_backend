@@ -466,9 +466,10 @@ target_include_directories(
 )
 
 if(${TRITON_ENABLE_ROCM})
+  # Hipified headers must be found before the original src/ copies.
   target_include_directories(
     triton-pytorch-backend
-    PRIVATE
+    BEFORE PRIVATE
       ${CMAKE_CURRENT_BINARY_DIR}/amdgpu/src
       ${CMAKE_CURRENT_BINARY_DIR}/amdgpu
   )
