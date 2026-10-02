@@ -92,18 +92,10 @@ def hipify(hipify_perl_path, src_file_path, dst_file_path):
         "torch/csrc/inductor/aoti_include/cuda.h",
     )
 
-    # Recent ROCm LibTorch puts allocator/stream APIs under c10::hip, not
-    # the c10::cuda masquerade that older hipify assumed.
-    s = s.replace(
-        "c10::cuda::CUDACachingAllocator", "c10::hip::HIPCachingAllocator"
-    )
-    s = s.replace("at::cuda::CUDAStream", "c10::hip::HIPStream")
-    s = s.replace(
-        "at::cuda::getStreamFromExternal", "c10::hip::getStreamFromExternal"
-    )
-    s = s.replace(
-        "at::cuda::setCurrentCUDAStream", "c10::hip::setCurrentHIPStream"
-    )
+    # ROCm torch 2.13 still declares the allocator and stream types in
+    # c10::cuda / at::cuda. The headers live under c10/hip/, which the
+    # include rewrite above already selects. c10::hip::HIPStream and
+    # c10::hip::HIPCachingAllocator are not the types those headers define.
 
     with open(dst_file_path, "w") as f:
         f.write(s)
